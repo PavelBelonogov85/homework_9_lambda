@@ -139,21 +139,30 @@ object Service {
         tableChats.add(currChat.copy(isDeleted = isDeleted))
         // и все его сообщения:
         val MessagesOfThisChat =
-            tableMessages.filter { message: Message -> message.chatID == chatId } // четвертая лямбда
+            tableMessages.filter { message: Message -> message.chatID == chatId }
+                .forEach { deleteRecoverMessage(it.id, isDeleted) }
+        /*
         for (mess in MessagesOfThisChat) {
             deleteRecoverMessage(mess.id, isDeleted)
         }
+        */
     }
 
     fun showMessages(chatId: Long, firstMessagePosition: Long, totalMessages: Int): List<Message> {
+        /*
         val lastMessageIndex = firstMessagePosition + totalMessages
-
         val resultMessagesList =
-            tableMessages.filter { message: Message -> message.chatID == chatId && message.positionInChat >= firstMessagePosition && message.positionInChat <= lastMessageIndex } // еще
-
+            tableMessages.filter { message: Message -> message.chatID == chatId && message.positionInChat >= firstMessagePosition && message.positionInChat <= lastMessageIndex }
         for (currMess in resultMessagesList) {
             Service.readMessage(currMess.id)
         }
+        */
+        val resultMessagesList = tableMessages.asSequence()
+            .filter { message: Message -> message.chatID == chatId && message.positionInChat >= firstMessagePosition}
+            .take(totalMessages)
+            .toList()
+
+        resultMessagesList.forEach { Service.readMessage(it.id) }
 
         return resultMessagesList
     }
@@ -203,4 +212,9 @@ fun main() {
 
     println("Вывести 5 (если есть) сообщений для чата Маша-Петя начиная со 2-го включительно")
     println(Service.showMessages(MashaPetya_Chat.id, 2, 5))
+
+    Service.showMessages(MashaPetya_Chat.id, 2, 5)
+        .joinToString(){it.text}
+
+
 }
